@@ -1,22 +1,41 @@
-﻿public var root : Volume;
+﻿var MeshSplitter : MeshSplitter;  //Needed to fragment the objects.
+public var root : Volume;
+public var maxBaseChildren : int = 6;
 
-//ONLY BASE VOLUMES SHOULD CONTAIN MESH FRAGMENTS.
+//ONLY BASE (LEAF) VOLUMES SHOULD CONTAIN MESH CHILDREN.
 public class Volume {
 	var bounds : Bounds = Bounds(Vector3.zero, Vector3.zero);
 	var children : Volume[];
 	var meshChild : MeshCollider;
-	public function Volume(b, c, m) {
+	var id : int = -1;  //Refers to what RenderObject instance to use. Default is unidentified at -1.
+	public function Volume(b, c, m, i) {
 		this.bounds = b;
 		this.children = c;
 		this.meshChild = m;
+		this.id = i;
 	}
 }
 
-function GenerateBVH(baseVolumes : Volume[], maxBaseChildren : int) {  //All RenderObjects must have colliders!
-	var renderObjects = GameObject.FindGameObjectsWithTag("RenderObject");  //Temporary solution to getting fragments.
+public class RayHit {  //In JS, you can't ref stuff, so the boolean and raycast hit have to be returned in an object.
+	var hit : boolean;
+	var hitInfo : RaycastHit;
+	public function RayHit(h, i) {
+		this.hit = h;
+		this.hitInfo = i;
+	}
 }
 
-function ObjectFragsToVolumes(objects : GameObject[]) {
+public function GenerateBVH() {  //All RenderObjects must have colliders!
+	var renderObjects = GameObject.FindGameObjectsWithTag("RenderObject");  //Temporary solution to getting fragments.
+	var leafVolumes : Volume[];
+	for(obj in renderObjects) {
+		leafVolumes.Add(MeshSplitter.SplitMeshToLeafVolumes(obj, 72)); //Adds a crapload of volumes with triangles in them. Second argument is the max tri count per leaf volume.
+	}
+	root.bounds = BoundVolumes(leafVolumes);
+	root.children = SubChildren(SubdivideVolume(root), leafVolumes, maxBaseChildren);  //BVH generated.
+}
+
+function ObjectFragsToVolumes(objects : GameObject[]) {  //Don't need to use unless for debug stuff.
 	var volumes : Volume[] = new Volume[objects.length];
 	for(var i : int = 0; i < volumes.length; i++) {
 		volumes[i].bounds = objects[i].GetComponent.<MeshFilter>().mesh.bounds;
@@ -86,18 +105,6 @@ function BoundVolumesToClusters(volumes : Volume[], clusterVolumes : Volume[]) {
 	return clusterVolumes;  //The new sub-bounding-volumes!
 }
 
-function GenerateNodes(baseVolumes : Volume[], maxChildren : int) {
-	var rootVolume : Volume;
-	rootVolume.bounds = BoundVolumes(baseVolumes);
-	rootVolume.children = SubChildren(SubdivideVolume(rootVolume), baseVolumes, maxChildren);
-	//for(volume in rootVolume.children) {
-		//if(volume.children.length > maxChildren) {
-			//volume.children = SubChildren(volume.children, baseVolumes, maxChildren);  //Creates more children (another level on the hierarchy).
-		//}
-	//}
-	return rootVolume;
-}
-
 function SubChildren(childVolumes : Volume[], baseVolumes : Volume[], maxChildren : int) : Volume[] {  //Takes children volumes and makes more children volumes for them.
 	for(var i : int = 0; i < childVolumes.length; i++) {
 		childVolumes[i].children = BoundVolumesToClusters(baseVolumes, SubdivideVolume(childVolumes[i]));
@@ -108,7 +115,7 @@ function SubChildren(childVolumes : Volume[], baseVolumes : Volume[], maxChildre
 	return childVolumes;
 }
 
-public function Raycast(ray : Ray, max : float, out raycastHit : RaycastHit) {
+public function Raycast(ray : Ray, raycastHit : RaycastHit, max : float) {
 	var hitVolume : Volume;
 	if(Intersection(ray, root, hitVolume)) {
 		var hit : RaycastHit;
@@ -128,7 +135,7 @@ function Intersection(ray : Ray, volume : Volume, volumeHit : Volume) : boolean 
 		if(volume.children[i].bounds.IntersectRay(ray)) {
 			vol = volume.children[i];
 			if(volume.children[i].length > 0) {
-				return Intersection(ray, vol);
+				return Intersection(ray, vol, volumeHit);
 			}
 			else {
 				volumeHit = vol;

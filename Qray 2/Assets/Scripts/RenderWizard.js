@@ -1,4 +1,5 @@
 ﻿import SFB;
+var BVH : BVH;
 var MaterialWizard : MaterialWizard;
 
 var prevTexture : UI.RawImage;
@@ -61,6 +62,10 @@ public static function SyncPreviewShaders() {  //Syncs Unity's realtime raster s
 		renderObjects[i].GetComponent.<Renderer>().material.mainTexture = ro.diffuse;
 		//renderObjects[i].GetComponent.<Renderer>().material.
 	}
+}
+
+function GenerateBVH() {
+	BVH.GenerateBVH();
 }
 
 function QuadLerp(a : Vector3, b : Vector3, c : Vector3, d : Vector3, u : float, v : float) {  //Converts UV coords of quad plane to 3D coords.

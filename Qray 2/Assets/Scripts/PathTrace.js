@@ -2,6 +2,7 @@
 import System.Collections.Generic;
 
 var RenderWizard : RenderWizard;
+var BVH : BVH;
 
 var cam : Transform;
 var camMain : Camera;
@@ -83,7 +84,7 @@ function Radiance(ray, bounces) {
 	var hit : RaycastHit;  //Object ray hits.
 	var id : int;  //Index number for mapping textures already in memory.
 	for(var b = 0; b < bounces; b++) {
-		if(Physics.Raycast(ray, hit, 100)) {
+		if(BVH.Raycast(ray, hit, 100)) {
 			id = hit.transform.GetComponent.<RenderObject>().id;
 			accumulateColor += mask * GetPixelFromUV(emittance[id], hit.textureCoord) * emittanceFac[id]; //Adds accumulate color to mask * emittance * emittanceFac.
 			ray.direction = BSDF(GetPixelFromUV(roughness[id], hit.textureCoord).r, ray.direction, hit.normal, GetPixelFromUV(reflectance[id], hit.textureCoord).r);  //Calculates a new ray direction based on inputs (shader part).
