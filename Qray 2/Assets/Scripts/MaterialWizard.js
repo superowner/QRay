@@ -31,7 +31,7 @@ function UpdateFields() {
 	diffusePrev.texture = activeRenderObject.diffuse;
 	reflectPrev.texture = activeRenderObject.reflectance;
 	roughnessPrev.texture = activeRenderObject.roughness;
-	if(activeRenderObject.emittanceFac > 0) {
+	if(true) {
 		lightPanel.SetActive(true);
 		emitFactor.text = activeRenderObject.emittanceFac.ToString();
 		emitPrev.texture = activeRenderObject.emittance;

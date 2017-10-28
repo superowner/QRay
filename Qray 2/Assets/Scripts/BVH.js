@@ -6,7 +6,7 @@ public var maxBaseChildren : int = 6;
 public class Volume {
 	var bounds : Bounds = Bounds(Vector3.zero, Vector3.zero);
 	var children : Volume[];
-	var meshChild : MeshCollider;
+	var meshChild : Mesh;
 	var id : int = -1;  //Refers to what RenderObject instance to use. Default is unidentified at -1.
 	public function Volume(b, c, m, i) {
 		this.bounds = b;
@@ -39,7 +39,7 @@ function ObjectFragsToVolumes(objects : GameObject[]) {  //Don't need to use unl
 	var volumes : Volume[] = new Volume[objects.length];
 	for(var i : int = 0; i < volumes.length; i++) {
 		volumes[i].bounds = objects[i].GetComponent.<MeshFilter>().mesh.bounds;
-		volumes[i].meshChild = objects[i].GetComponent.<MeshCollider>();
+		volumes[i].meshChild = objects[i].GetComponent.<MeshFilter>().mesh;
 	}
 	return volumes;
 }
@@ -88,7 +88,6 @@ function SubdivideVolume(vol : Volume) {  //Creates 8 more subdivided volumes in
 }
 
 function BoundVolumesToClusters(volumes : Volume[], clusterVolumes : Volume[]) {  //Creates sub bounds for the input volumes based on the input cluster volumes.
-	var removes : int[];
 	for(var i : int = 0; i < clusterVolumes.length; i++) {
 		for(var ii : int = 0; ii < volumes.length; ii++) {
 			if(clusterVolumes[i].bounds.Contains(volumes[ii].bounds.centre)) {
@@ -96,7 +95,6 @@ function BoundVolumesToClusters(volumes : Volume[], clusterVolumes : Volume[]) {
 			}
 		}
 		if(clusterVolumes[i].children.length == 0) {  //No children - delete the node.
-				//removes.Add(i);  //This volume will be deleted because it is empty.
 				clusterVolumes.RemoveAt(i);
 				i--;
 		}
@@ -119,7 +117,12 @@ public function Raycast(ray : Ray, raycastHit : RaycastHit, max : float) {
 	var hitVolume : Volume;
 	if(Intersection(ray, root, hitVolume)) {
 		var hit : RaycastHit;
-		if(hitVolume.meshChild.Raycast(ray, hit, max)) { //Only performs an intersection test on this fragment of mesh.
+		var tmp : GameObject = new GameObject("coll");
+		var coll = tmp.AddComponent.<MeshCollider>();
+		tmp.transform.position = hitVolume.bounds.position;
+		coll.sharedMesh = null;
+		coll.sharedMesh = hitVolume.meshChild;
+		if(coll.Raycast(ray, hit, max)) { //Only performs an intersection test on this fragment of mesh.
 			raycastHit = hit;
 			return true;
 		}

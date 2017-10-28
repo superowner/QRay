@@ -81,7 +81,7 @@ public function CameraRay(x : int, y : int, w : int, h : int) {  //Returns a cam
 
 public function CameraRayDOF(x : int, y : int, w : int, h : int, focus : Vector3, fStop : float) {  //Returns a camera ray based on the selected camera plane.
 		var original = TransformSnapshot(camOrigin.transform.position, camOrigin.transform.rotation, camOrigin.transform.localScale);
-		DOFShift(camOrigin.transform, focus, fStop);
+		DOFShift(camOrigin.transform, focus, fStop);  //This moves the camera a little. More samples will make the image blur due to this shift.
 		var u : float = (x * 1.0) / w;  //Converts the x,y coords to UV coords from plane. Ensures a precise float is returned.
 		var v : float = (y * 1.0) / h;  //<----------------------
 		var dir : Vector3 = (QuadLerp(cam.points[2], cam.points[3], cam.points[0], cam.points[1], u, v) - camOrigin.transform.position).normalized;  //Constructs a direction vector via the camera plane origin and the UV plane coord.
@@ -92,6 +92,7 @@ public function CameraRayDOF(x : int, y : int, w : int, h : int, focus : Vector3
 }
 
 public function DOFShift(cam : Transform, focus : Vector3, fStop : float) {  //Adds some random rotation to the camera for depth of field.
+	focus = Vector3(cam.position.x, cam.position.y, cam.position.z + Vector3.Dot(cam.forward, focus));  //Because we want the focus as a length that is directly in front of the cam origin, not offset.
 	var c = Random.insideUnitCircle;
 	cam.transform.RotateAround(focus, Vector3(c.x, c.y, 0), fStop);
 }
@@ -138,4 +139,9 @@ function CheckSavePaths() {
 function SelectDirectory() {
 	pathText.text = StandaloneFileBrowser.OpenFolderPanel("Open Folder", "", false)[0].Replace("\\","/");
 	PlayerPrefs.SetString("SavePath", pathText.text);
+	path = pathText.text;
+}
+
+function SetSaveName() {
+	saveName = nameField.text;
 }

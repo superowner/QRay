@@ -8243,7 +8243,18 @@ MonoBehaviour:
   m_CharacterLimit: 0
   m_OnEndEdit:
     m_PersistentCalls:
-      m_Calls: []
+      m_Calls:
+      - m_Target: {fileID: 1232857860}
+        m_MethodName: SetSaveName
+        m_Mode: 1
+        m_Arguments:
+          m_ObjectArgument: {fileID: 0}
+          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
+          m_IntArgument: 0
+          m_FloatArgument: 0
+          m_StringArgument: 
+          m_BoolArgument: 0
+        m_CallState: 2
     m_TypeName: UnityEngine.UI.InputField+SubmitEvent, UnityEngine.UI, Version=1.0.0.0,
       Culture=neutral, PublicKeyToken=null
   m_OnValueChanged:
@@ -9013,6 +9024,7 @@ GameObject:
   - component: {fileID: 1232857863}
   - component: {fileID: 1232857862}
   - component: {fileID: 1232857864}
+  - component: {fileID: 1232857865}
   m_Layer: 0
   m_Name: _Manager
   m_TagString: Untagged
@@ -9033,6 +9045,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   RenderWizard: {fileID: 1232857860}
   BVH: {fileID: 1232857863}
+  Shaders: {fileID: 1232857865}
   cam: {fileID: 319370267}
   camMain: {fileID: 319370266}
   renderCamera: {fileID: 1210179506}
@@ -9090,7 +9103,7 @@ MonoBehaviour:
   saveName: 
   envMap: {fileID: 2800000, guid: a4690dc285ac8a04884e6953a0dfe836, type: 3}
   envFac: 2
-  fStop: 0.4
+  fStop: 0.5
   cursor: {fileID: 1845541454}
   samplesField: {fileID: 1518305864}
   tileSizeField: {fileID: 697034650}
@@ -9166,6 +9179,17 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   importAssets: 0
   importAssetPath: _ImportedOBJ
+--- !u!114 &1232857865
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 0}
+  m_GameObject: {fileID: 1232857857}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4d679ed97512a2a47b41f5cad045e4fa, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!1 &1278208228
 GameObject:
   m_ObjectHideFlags: 0

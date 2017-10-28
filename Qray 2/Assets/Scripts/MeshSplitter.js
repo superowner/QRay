@@ -1,7 +1,7 @@
 ﻿var BVH : BVH;
 var fragment : GameObject;
 
-public function SplitMesh(obj : GameObject, maxTris : int) {  //USED FOR DEBUG - VERY SLOW. Returns an object where all its children are the mesh fragments.
+public function SplitMesh(obj : GameObject, maxTris : int) {  //USED FOR DEBUG - VERY SLOW. Returns an object where all its transform children are the mesh fragments.
 	maxTris *= 3;  //Because there are 3 vertices per triangle.
 	var mesh = obj.GetComponent.<MeshFilter>().mesh;
 	var parent = GameObject(obj.name);
@@ -21,8 +21,8 @@ public function SplitMesh(obj : GameObject, maxTris : int) {  //USED FOR DEBUG -
 			t[ii + 1] = ii + 1;
 			t[ii + 2] = ii + 2;
 			uv[ii] = mesh.uv[i + ii];
-			uv[ii + 1] = mesh.uv[i + ii + 1];
-			uv[ii + 2] = mesh.uv[i + ii + 2];
+			//uv[ii + 1] = mesh.uv[i + ii + 1];
+			//uv[ii + 2] = mesh.uv[i + ii + 2];
 		}
 		var mf = o.GetComponent.<MeshFilter>();
 		mf.mesh.vertices = v;
@@ -63,36 +63,34 @@ public function SplitMeshToLeafVolumes(obj : GameObject, maxTris : int) {  //Ret
 			//uv[ii + 1] = mesh.uv[i + ii + 1];
 			//uv[ii + 2] = mesh.uv[i + ii + 2];
 		}
-		var m = new Mesh();
+		var m : Mesh = new Mesh();
 		m.vertices = v;
 		m.triangles = t;
 		m.uv = uv;
 		m.RecalculateBounds();
-		var coll : MeshCollider = new MeshCollider();
-		coll.sharedMesh = null;
-		coll.sharedMesh = m;
-		parent[i / maxTris].meshChild = coll;
-		parent[i / maxTris].bounds = m.bounds;
-		parent[i / maxTris].id = id;
+		parent[i / 3].meshChild = m;
+		parent[i / 3].bounds = m.bounds;
+		parent[i / 3].id = id;
 	}
-	m = new Mesh();  //Create last triangle cluster volume.
-	m.vertices = GetLastVerts(mesh.vertices, remainderTris);
-	m.triangles = GetLastInts(mesh.triangles, remainderTris);
-	m.uv = GetLastUVs(mesh.uv, remainderTris);
-	m.RecalculateBounds();
-	coll = new MeshCollider();
-	coll.sharedMesh = m;
-	parent[parent.length - 1].meshChild = coll;
-	parent[parent.length - 1].bounds = m.bounds;
+	var m2 = new Mesh();  //Create last triangle cluster volume.
+	m2.vertices = GetLastVerts(mesh.vertices, remainderTris);
+	m2.triangles = GetLastInts(mesh.triangles, remainderTris);
+	m2.uv = GetLastUVs(mesh.uv, remainderTris);
+	m2.RecalculateBounds();
+	parent[parent.length - 1].meshChild = m2;
+	parent[parent.length - 1].bounds = m2.bounds;
 	parent[parent.length - 1].id = id;
 	return parent;  //Array of volumes, not empty object.
 }
 
 
 function GetLastVerts(a : Vector3[], range : int) : Vector3[] {
+	Debug.Log(range.ToString() + "   " + a.length.ToString());
+	Debug.Log(a[0]);
 	var x : Vector3[] = new Vector3[range];
 	for(var i = 0; i < range; i++) {
-		x[i] = a[a.length - i];
+		Debug.Log(i);
+		x[i] = a[(a.length -1) - i];
 	}
 	return x;
 }
@@ -100,7 +98,7 @@ function GetLastVerts(a : Vector3[], range : int) : Vector3[] {
 function GetLastUVs(a : Vector2[], range : int) : Vector2[] {
 	var x : Vector2[] = new Vector2[range];
 	for(var i = 0; i < range; i++) {
-		x[i] = a[a.length - i];
+		x[i] = a[(a.length -1) - i];
 	}
 	return x;
 }
@@ -108,7 +106,7 @@ function GetLastUVs(a : Vector2[], range : int) : Vector2[] {
 function GetLastInts(a : int[], range : int) : int[] {
 	var x : int[] = new int[range];
 	for(var i = 0; i < range; i++) {
-		x[i] = a[a.length - i];
+		x[i] = a[(a.length -1) - i];
 	}
 	return x;
 }

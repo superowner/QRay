@@ -3,6 +3,7 @@ import System.Collections.Generic;
 
 var RenderWizard : RenderWizard;
 var BVH : BVH;
+var Shaders : Shaders;
 
 var cam : Transform;
 var camMain : Camera;
@@ -64,7 +65,7 @@ function CreateRenderTexture(width : int, height : int) {
 
 function SaveRender() {
 	var bytes = renderTexture.EncodeToPNG();
-	File.WriteAllBytes(RenderWizard.path + RenderWizard.saveName + ".png", bytes);
+	File.WriteAllBytes(RenderWizard.path + "/" + RenderWizard.saveName + ".png", bytes);
 }
 
 function RenderPixel(x : int, y : int, s : int) {
@@ -84,17 +85,17 @@ function Radiance(ray, bounces) {
 	var hit : RaycastHit;  //Object ray hits.
 	var id : int;  //Index number for mapping textures already in memory.
 	for(var b = 0; b < bounces; b++) {
-		if(BVH.Raycast(ray, hit, 100)) {
+		if(Physics.Raycast(ray, hit, 100)) {
 			id = hit.transform.GetComponent.<RenderObject>().id;
 			accumulateColor += mask * GetPixelFromUV(emittance[id], hit.textureCoord) * emittanceFac[id]; //Adds accumulate color to mask * emittance * emittanceFac.
-			ray.direction = BSDF(GetPixelFromUV(roughness[id], hit.textureCoord).r, ray.direction, hit.normal, GetPixelFromUV(reflectance[id], hit.textureCoord).r);  //Calculates a new ray direction based on inputs (shader part).
+			ray.direction = Shaders.BSDF(GetPixelFromUV(roughness[id], hit.textureCoord).r, ray.direction, hit.normal, GetPixelFromUV(reflectance[id], hit.textureCoord).r, GetPixelFromUV(transmission[id], hit.textureCoord).r);  //Calculates a new ray direction based on inputs (shader part).
 			ray.origin = hit.point;  //Sets the new ray origin to hit location.
 			mask *= GetPixelFromUV(diffuse[id], hit.textureCoord);  //Multiplies mask by surface color.
 			mask *= Vector3.Dot(ray.direction, hit.normal);
 			//mask *= fudgeFactor;
 		}
 		else {
-			return LightPath(accumulateColor + mask * GetPixelFromUV(RenderWizard.envMap, RenderWizard.VectorToEnvUV(ray.direction)) * RenderWizard.envFac, hit.point);  //Factors in the environment map emittance.
+			return LightPath(accumulateColor + mask * GetPixelFromUV(RenderWizard.envMap, Shaders.EnvMapUV(ray.direction)) * RenderWizard.envFac, hit.point);  //Factors in the environment map emittance.
 		}
 	}
 	return LightPath(accumulateColor, hit.point);
@@ -114,7 +115,7 @@ function SampleHemisphereCap(normal : Vector3, angle : float) : Vector3 { //Whoo
     return targetDirection * V;
 }
 
-function BSDF(roughness : float, inRay : Vector3, normal : Vector3, reflectance : float) {  //Bidirectional Scatter Distribution Function - Will eventually take roughness value.
+function BSDF(roughness : float, inRay : Vector3, normal : Vector3, reflectance : float, transmission : float) {  //Bidirectional Scatter Distribution Function - Will eventually take roughness value.
 	var rand = Random.Range(0.00, 1.00);
 	var reflect : boolean =  reflectance > rand;
 	if(reflect) {  //Reflect ray.
@@ -123,7 +124,10 @@ function BSDF(roughness : float, inRay : Vector3, normal : Vector3, reflectance 
 		else { return normal; }  //So we don't waste compute power.
 	}
 	else {  //Transmit ray / diffuse it.
-		return SampleHemisphereCap(normal, 180);
+		rand = Random.Range(0.00, 1.00);
+		var transmit = transmission > rand;
+		if(transmit) { return SampleHemisphereCap(normal, roughness * 180) * -1; }
+		else { return SampleHemisphereCap(normal, 180); }
 	}
 }
 
