@@ -1,9 +1,11 @@
-﻿var point : GameObject;
+﻿var Shaders : Shaders;
+
+var point : GameObject;
 var normal : Vector3 = Vector3(0,1,0);  //up
 
 function Start() {
 	for(var i = 0; i < 200; i++) {
-		Instantiate(point, SampleHemisphereCap(normal, 90), Quaternion(0,0,0,0));
+		Instantiate(point, Shaders.SampleHemisphereCap(normal, 180), Quaternion(0,0,0,0));
 	}
 }
 

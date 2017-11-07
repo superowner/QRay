@@ -189,7 +189,7 @@ MonoBehaviour:
   m_PrefabParentObject: {fileID: 0}
   m_PrefabInternal: {fileID: 0}
   m_GameObject: {fileID: 976432673}
-  m_Enabled: 1
+  m_Enabled: 0
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 0d05886ee2378f948a308cc069b11e23, type: 3}
   m_Name: 
@@ -202,7 +202,7 @@ MonoBehaviour:
   m_PrefabParentObject: {fileID: 0}
   m_PrefabInternal: {fileID: 0}
   m_GameObject: {fileID: 976432673}
-  m_Enabled: 1
+  m_Enabled: 0
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: e785cba55d270c44099349e95071a4d5, type: 3}
   m_Name: 
@@ -213,7 +213,7 @@ MonoBehaviour:
   roughness: {fileID: 2800000, guid: d041c631dcffdf24cb00333861aa959a, type: 3}
   reflectance: {fileID: 2800000, guid: a4690dc285ac8a04884e6953a0dfe836, type: 3}
   transmission: {fileID: 2800000, guid: d041c631dcffdf24cb00333861aa959a, type: 3}
-  ior: {fileID: 2800000, guid: d041c631dcffdf24cb00333861aa959a, type: 3}
+  ior: NaN
   emittance: {fileID: 2800000, guid: a4690dc285ac8a04884e6953a0dfe836, type: 3}
   emittanceFac: 0
 --- !u!114 &976432679
@@ -222,11 +222,12 @@ MonoBehaviour:
   m_PrefabParentObject: {fileID: 0}
   m_PrefabInternal: {fileID: 0}
   m_GameObject: {fileID: 976432673}
-  m_Enabled: 1
+  m_Enabled: 0
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 46be9b7bae804a648884d0b6b3f376b2, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  BVH: {fileID: 0}
   fragment: {fileID: 1461559151112418, guid: 4a97fed900239b349a4c897637a35f6e, type: 2}
 --- !u!1001 &1192672233
 Prefab:
@@ -379,6 +380,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d32fabf0c3f6e764fb067a3bbfcd664f, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  Shaders: {fileID: 1395395846}
   point: {fileID: 1402189177036064, guid: 73c5070e7c04bfd47a2c64817dcd9f81, type: 2}
   normal: {x: 0, y: 1, z: 0}
 --- !u!114 &1395395845
@@ -390,6 +392,17 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 32871e51020e9dd4ca223b9694dc6130, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+--- !u!114 &1395395846
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 0}
+  m_GameObject: {fileID: 1395395843}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4d679ed97512a2a47b41f5cad045e4fa, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
 --- !u!1 &1400710609

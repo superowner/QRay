@@ -75,19 +75,19 @@ function QuadLerp(a : Vector3, b : Vector3, c : Vector3, d : Vector3, u : float,
 public function CameraRay(x : int, y : int, w : int, h : int) {  //Returns a camera ray based on the selected camera plane.
 		var u : float = (x * 1.0) / w;  //Converts the x,y coords to UV coords from plane. Ensures a precise float is returned.
 		var v : float = (y * 1.0) / h;  //<----------------------
-		var dir : Vector3 = (QuadLerp(cam.points[2], cam.points[3], cam.points[0], cam.points[1], u, v) - cam.originPoint).normalized;  //Constructs a direction vector via the camera plane origin and the UV plane coord.
-		return Ray(cam.originPoint, dir);
+		var dir : Vector3 = (QuadLerp(cam.points[2], cam.points[3], cam.points[0], cam.points[1], u, v) - cam.origin.transform.position).normalized;  //Constructs a direction vector via the camera plane origin and the UV plane coord.
+		return Ray(cam.origin.transform.position, dir);
 }
 
 public function CameraRayDOF(x : int, y : int, w : int, h : int, focus : Vector3, fStop : float) {  //Returns a camera ray based on the selected camera plane.
-		var original = TransformSnapshot(camOrigin.transform.position, camOrigin.transform.rotation, camOrigin.transform.localScale);
-		DOFShift(camOrigin.transform, focus, fStop);  //This moves the camera a little. More samples will make the image blur due to this shift.
+		var original = TransformSnapshot(cam.origin.transform.position, cam.origin.transform.rotation, cam.origin.transform.localScale);
+		DOFShift(cam.origin.transform, focus, fStop);  //This moves the camera a little. More samples will make the image blur due to this shift.
 		var u : float = (x * 1.0) / w;  //Converts the x,y coords to UV coords from plane. Ensures a precise float is returned.
 		var v : float = (y * 1.0) / h;  //<----------------------
-		var dir : Vector3 = (QuadLerp(cam.points[2], cam.points[3], cam.points[0], cam.points[1], u, v) - camOrigin.transform.position).normalized;  //Constructs a direction vector via the camera plane origin and the UV plane coord.
-		var origin = camOrigin.transform.position;
-		camOrigin.gameObject.transform.position = original.position;  //Resets the camera position back to the true centre.
-		camOrigin.gameObject.transform.rotation = original.rotation;  //<--------------------
+		var dir : Vector3 = (QuadLerp(cam.points[2], cam.points[3], cam.points[0], cam.points[1], u, v) - cam.origin.transform.position).normalized;  //Constructs a direction vector via the camera plane origin and the UV plane coord.
+		var origin = cam.origin.transform.position;
+		cam.origin.transform.position = original.position;  //Resets the camera position back to the true centre.
+		cam.origin.transform.rotation = original.rotation;  //<--------------------
 		return Ray(origin, dir);
 }
 
@@ -99,10 +99,11 @@ public function DOFShift(cam : Transform, focus : Vector3, fStop : float) {  //A
 
 
 function DrawCameraBounds() {  //Only shows in Unity Editor window. Used to visualise which plane vertices are where.
-	Debug.DrawLine(cam.originPoint, cam.points[2], Color.red, 100000, false);
-	Debug.DrawLine(cam.originPoint, cam.points[3], Color.blue, 100000, false);
-	Debug.DrawLine(cam.originPoint, cam.points[0], Color.green, 100000, false);
-	Debug.DrawLine(cam.originPoint, cam.points[1], Color.yellow, 100000, false);
+	Debug.DrawLine(cam.origin.transform.position, cam.points[2], Color.red, 100000, false);
+	Debug.DrawLine(cam.origin.transform.position, cam.points[3], Color.blue, 100000, false);
+	Debug.DrawLine(cam.origin.transform.position, cam.points[0], Color.green, 100000, false);
+	Debug.DrawLine(cam.origin.transform.position, cam.points[1], Color.yellow, 100000, false);
+	Debug.DrawLine(cam.origin.transform.position, QuadLerp(cam.points[2], cam.points[3], cam.points[0], cam.points[1], 0.5, 0.5), Color.red, 100000, false);
 }
 
 public function SelectCamera(c : GameObject) {  //Selects what camera the ray generation functions will use so it doesn't have to be called a million times.

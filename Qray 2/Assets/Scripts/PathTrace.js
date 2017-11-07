@@ -2,10 +2,11 @@
 import System.Collections.Generic;
 
 var RenderWizard : RenderWizard;
+var ImportWizard : ImportWizard;
 var BVH : BVH;
 var Shaders : Shaders;
 
-var cam : Transform;
+var cam : CameraObject;
 var camMain : Camera;
 var renderCamera : GameObject;
 var renderPreview : UI.RawImage;
@@ -21,7 +22,7 @@ var normal : Texture2D[];
 var roughness : Texture2D[];
 var reflectance : Texture2D[];
 var transmission : Texture2D[];
-var ior : Texture2D[];
+var ior : float[];
 var emittance : Texture2D[];
 var emittanceFac : float[];
 //--------------------------------
@@ -38,7 +39,7 @@ function LoadRenderObjects() {
 	roughness = new Texture2D[renderObjects.length];
 	reflectance = new Texture2D[renderObjects.length];
 	transmission = new Texture2D[renderObjects.length];
-	ior = new Texture2D[renderObjects.length];
+	ior = new float[renderObjects.length];
 	emittance = new Texture2D[renderObjects.length];
 	emittanceFac = new float[renderObjects.length];
 	var ro : RenderObject;
@@ -54,6 +55,7 @@ function LoadRenderObjects() {
 		emittance[i] = ro.emittance;
 		emittanceFac[i] = ro.emittanceFac;
 	}
+	ImportWizard.InternalColliders(GameObject.FindGameObjectsWithTag("RenderObject"));
 	RenderWizard.SyncPreviewShaders();
 	Debug.Log("Scene reloaded.");
 }
@@ -71,71 +73,45 @@ function SaveRender() {
 function RenderPixel(x : int, y : int, s : int) {
 	var ray : Ray;
 	var pixelColor : Color = Color.black;
+	var w : float = 0;
 	for(var i = 0; i < s; i++) {
 		ray = RenderWizard.CameraRayDOF(x, y, renderTexture.width, renderTexture.height, RenderWizard.cursor.position, RenderWizard.fStop);
-		pixelColor += Radiance(ray, RenderWizard.maxBounces).accumulateColor;
+		//ray = RenderWizard.CameraRay(x, y, renderTexture.width, renderTexture.height);
+		//Debug.DrawRay(ray.origin, ray.direction, Color.red, 10000);
+		var r = Radiance(ray, RenderWizard.maxBounces);
+		pixelColor += r.accumulateColor;
+		w += r.weight;
 	}
-	pixelColor /= s;
+	pixelColor /= w;
 	renderTexture.SetPixel(x, y, pixelColor);
 }
 
 function Radiance(ray, bounces) {
 	accumulateColor = Color.black;
 	mask = Color.white;
+	var weight : float = 0;
 	var hit : RaycastHit;  //Object ray hits.
 	var id : int;  //Index number for mapping textures already in memory.
+	var sr : ShaderReturn;
 	for(var b = 0; b < bounces; b++) {
 		if(Physics.Raycast(ray, hit, 100)) {
 			id = hit.transform.GetComponent.<RenderObject>().id;
-			accumulateColor += mask * GetPixelFromUV(emittance[id], hit.textureCoord) * emittanceFac[id]; //Adds accumulate color to mask * emittance * emittanceFac.
-			ray.direction = Shaders.BSDF(GetPixelFromUV(roughness[id], hit.textureCoord).r, ray.direction, hit.normal, GetPixelFromUV(reflectance[id], hit.textureCoord).r, GetPixelFromUV(transmission[id], hit.textureCoord).r);  //Calculates a new ray direction based on inputs (shader part).
+			sr = Shaders.BSDF(GetPixelFromUV(diffuse[id], hit.textureCoord), GetPixelFromUV(roughness[id], hit.textureCoord).r, ray.direction, hit.normal, GetPixelFromUV(reflectance[id], hit.textureCoord).r, GetPixelFromUV(transmission[id], hit.textureCoord).r, normal[id].GetPixelBilinear(hit.textureCoord.x, hit.textureCoord.y));  //Calculates a new ray direction based on inputs (shader part).
+			ray.direction = sr.dir;  //Calculates a new ray direction based on inputs (shader part).
 			ray.origin = hit.point;  //Sets the new ray origin to hit location.
-			mask *= GetPixelFromUV(diffuse[id], hit.textureCoord);  //Multiplies mask by surface color.
+			accumulateColor += mask * GetPixelFromUV(emittance[id], hit.textureCoord) * emittanceFac[id]; //Adds accumulate color to mask * emittance * emittanceFac.
+			mask *= sr.color;  //Multiplies mask by surface color.
 			mask *= Vector3.Dot(ray.direction, hit.normal);
 			//mask *= fudgeFactor;
+			weight += sr.weight;
 		}
 		else {
-			return LightPath(accumulateColor + mask * GetPixelFromUV(RenderWizard.envMap, Shaders.EnvMapUV(ray.direction)) * RenderWizard.envFac, hit.point);  //Factors in the environment map emittance.
+			return LightPath(accumulateColor + mask * GetPixelFromUV(RenderWizard.envMap, Shaders.EnvMapUV(ray.direction)) * RenderWizard.envFac, 1);  //Factors in the environment map emittance.
 		}
 	}
-	return LightPath(accumulateColor, hit.point);
+	return LightPath(accumulateColor, 1);
 }
 
-function SamReflectanceModel(normal : Vector3) { //Sam's bad reflectance model. No variance in roughness - fully diffuse.
-	var v : Vector3 = Random.onUnitSphere;
-	return v * Mathf.Sign(Vector3.Dot(v, normal));
-}
-
-function SampleHemisphereCap(normal : Vector3, angle : float) : Vector3 { //Whoop! This one works!
-	angle /= 2;
-	var targetDirection : Quaternion = Quaternion.LookRotation(normal, Vector3.up);
-    var angleInRad = Random.Range(0.0, angle) * Mathf.Deg2Rad;
-    var PointOnCircle = (Random.insideUnitCircle.normalized) * Mathf.Sin(angleInRad);
-    var V = Vector3(PointOnCircle.x, PointOnCircle.y, Mathf.Cos(angleInRad));
-    return targetDirection * V;
-}
-
-function BSDF(roughness : float, inRay : Vector3, normal : Vector3, reflectance : float, transmission : float) {  //Bidirectional Scatter Distribution Function - Will eventually take roughness value.
-	var rand = Random.Range(0.00, 1.00);
-	var reflect : boolean =  reflectance > rand;
-	if(reflect) {  //Reflect ray.
-		normal = Vector3.Reflect(inRay, normal);
-		if(roughness > 0) { return SampleHemisphereCap(normal, roughness * 180.0); } //Applies the roughness to the reflection normal.
-		else { return normal; }  //So we don't waste compute power.
-	}
-	else {  //Transmit ray / diffuse it.
-		rand = Random.Range(0.00, 1.00);
-		var transmit = transmission > rand;
-		if(transmit) { return SampleHemisphereCap(normal, roughness * 180) * -1; }
-		else { return SampleHemisphereCap(normal, 180); }
-	}
-}
-
-function SchlickApproximate(ray : Vector3, normal : Vector3, ior : float) {
-	var theta = Vector3.Angle(ray, normal);
-	var r = Mathf.Pow((1 - ior) / (1 + ior), 2);  //'1' is the first medium ior, for now will stay as 1 (vacuum ior). 'ior' is the new medium ior.
-	return r + Mathf.Pow((1 - r) * (1 - Mathf.Cos(theta)), 5);  //Returns the refelction probability (approximation).
-}
 
 function GetPixelFromUV(texture : Texture2D, uv : Vector2) {  //Returns a color from a UV coord on a texture.
 	uv.x *= texture.height;
@@ -173,50 +149,44 @@ function RenderAllTiles(tWidth : int, tHeight : int) {
 	}
 }
 
+function RenderRandom(width : int, height : int, samples : int) {
+	var pcMap : Vector2[] = new Vector2[width * height];
+	var index : int = 0;
+	for(var i = 0; i < width; i++) {
+		for(var ii = 0; ii < height; ii++) {
+			pcMap[index] = Vector2(i, ii);
+			index++;
+		}
+	}
+	var cMap = new List.<Vector2>(pcMap);
+	pcMap = null;
+	var tSize = RenderWizard.tSize;
+	var m = (width * height) / tSize * tSize;
+	Debug.Log(cMap.Count);
+	for(var iii = 0; iii < m; iii++) {
+		for(var y = 0; y < tSize; y++) {
+			var r : int = Random.Range(0, cMap.Count);
+			RenderPixel(cMap[r].x, cMap[r].y, RenderWizard.samples);
+			cMap.RemoveAt(r);
+		}
+	renderTexture.Apply();
+	yield;
+	}
+}
+
 function DebugRenderTiles() {
 	CreateRenderTexture(RenderWizard.width, RenderWizard.height);
 	StartCoroutine(RenderAllTiles(RenderWizard.tSize, RenderWizard.tSize));
 }
 
 function RenderTilesBiSample() {
-	GetLightData(128,128,16);
+	cam.UpdateCamera();
 	CreateRenderTexture(RenderWizard.width, RenderWizard.height);
-	StartCoroutine(RenderAllTiles(RenderWizard.tSize, RenderWizard.tSize));
+	//StartCoroutine(RenderAllTiles(RenderWizard.tSize, RenderWizard.tSize));
+	StartCoroutine(RenderRandom(RenderWizard.width, RenderWizard.height, RenderWizard.samples));
+	renderTexture.Apply();  //Makes it readable.
 }
 
 function StopRender() {
 	StopCoroutine("RenderAllTiles");
-}
-
-function SampleLights(ray, bounces) {
-	var hit : RaycastHit;  //Object ray hits.
-	var id : int;  //Index number for mapping textures already in memory.
-	var ld : LightData = LightData(Vector3(0,0,0),Vector3(0,0,0), 0, Color.black);
-	for(var b = 0; b < bounces; b++) {
-		if(Physics.Raycast(ray, hit, 100)) {
-			id = hit.transform.GetComponent.<RenderObject>().id;
-			if(emittanceFac[id] > 0) {
-				ld.point = hit.point;
-				ld.normal = hit.normal;
-				ld.id = id;
-				ld.color = GetPixelFromUV(emittance[id], hit.textureCoord);
-				lightData.Add(ld);
-			}
-			ray.direction = SamReflectanceModel(hit.normal);
-			ray.origin = hit.point;
-		}
-		else {
-			return;
-		}
-	}
-}
-
-function GetLightData(w : int, h : int, b : int) {  //Array size for sample rays and bounce count. (Bigger will produce more light data.)
-	lightData.Clear();
-	lightData = new List.<LightData>();
-	for(var x = 0; x < w; x++) {
-		for(var y = 0; y < h; y++) {
-			SampleLights(RenderWizard.CameraRay(x, y, w, h), 4);
-		}
-	}
 }

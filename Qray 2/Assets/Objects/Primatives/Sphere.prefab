@@ -95,7 +95,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   id: 0
   diffuse: {fileID: 2800000, guid: d041c631dcffdf24cb00333861aa959a, type: 3}
-  normal: {fileID: 2800000, guid: d041c631dcffdf24cb00333861aa959a, type: 3}
+  normal: {fileID: 2800000, guid: 135f698973b886c49b78d1577ed2e6b9, type: 3}
   roughness: {fileID: 2800000, guid: d041c631dcffdf24cb00333861aa959a, type: 3}
   reflectance: {fileID: 2800000, guid: d041c631dcffdf24cb00333861aa959a, type: 3}
   transmission: {fileID: 2800000, guid: d041c631dcffdf24cb00333861aa959a, type: 3}

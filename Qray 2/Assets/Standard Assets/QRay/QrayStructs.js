@@ -15,10 +15,10 @@ class LightData {
 //Returned out of Radiance function.
 class LightPath {
 	var accumulateColor : Color;
-	var lastHitPoint : Vector3;
-	public function LightPath(a : Color, l : Vector3) {
+	var weight : float;
+	public function LightPath(a : Color, w : float) {
 		this.accumulateColor = a;
-		this.lastHitPoint = l;
+		this.weight = w;
 	}
 }
 
