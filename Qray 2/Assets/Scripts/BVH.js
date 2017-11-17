@@ -1,4 +1,6 @@
-﻿var MeshSplitter : MeshSplitter;  //Needed to fragment the objects.
+﻿import System.Linq;
+
+var MeshSplitter : MeshSplitter;  //Needed to fragment the objects.
 public var root : Volume;
 public var maxBaseChildren : int = 6;
 
@@ -7,11 +9,13 @@ public class Volume {
 	var bounds : Bounds = Bounds(Vector3.zero, Vector3.zero);
 	var children : Volume[];
 	var meshChild : Mesh;
-	var id : int = -1;  //Refers to what RenderObject instance to use. Default is unidentified at -1.
-	public function Volume(b, c, m, i) {
+	var transformChild : Transform;
+	var id : int = 0;  //Refers to what RenderObject instance to use. Default is unidentified at -1. Jk it's not for now.
+	public function Volume(b, c, m, t, i) {
 		this.bounds = b;
 		this.children = c;
 		this.meshChild = m;
+		this.transformChild = t;
 		this.id = i;
 	}
 }
@@ -19,9 +23,11 @@ public class Volume {
 public class RayHit {  //In JS, you can't ref stuff, so the boolean and raycast hit have to be returned in an object.
 	var hit : boolean;
 	var hitInfo : RaycastHit;
-	public function RayHit(h, i) {
+	var id : int;
+	public function RayHit(h, i, id) {
 		this.hit = h;
 		this.hitInfo = i;
+		this.id = id;
 	}
 }
 
@@ -29,7 +35,7 @@ public function GenerateBVH() {  //All RenderObjects must have colliders!
 	var renderObjects = GameObject.FindGameObjectsWithTag("RenderObject");  //Temporary solution to getting fragments.
 	var leafVolumes : Volume[];
 	for(obj in renderObjects) {
-		leafVolumes.Add(MeshSplitter.SplitMeshToLeafVolumes(obj, 72)); //Adds a crapload of volumes with triangles in them. Second argument is the max tri count per leaf volume.
+		leafVolumes.Concat(MeshSplitter.SplitMeshToLeafVolumes(obj, 72)).ToArray(); //Adds a crapload of volumes with triangles in them. Second argument is the max tri count per leaf volume.
 	}
 	root.bounds = BoundVolumes(leafVolumes);
 	root.children = SubChildren(SubdivideVolume(root), leafVolumes, maxBaseChildren);  //BVH generated.
@@ -118,6 +124,9 @@ public function Raycast(ray : Ray, raycastHit : RaycastHit, max : float) {
 	if(Intersection(ray, root, hitVolume)) {
 		var hit : RaycastHit;
 		var tmp : GameObject = new GameObject("coll");
+		tmp.transform.position = hitVolume.transformChild.position;
+		tmp.transform.localScale = hitVolume.transformChild.localScale;
+		tmp.transform.rotation = hitVolume.transformChild.rotation;
 		var coll = tmp.AddComponent.<MeshCollider>();
 		tmp.transform.position = hitVolume.bounds.position;
 		coll.sharedMesh = null;
@@ -129,6 +138,28 @@ public function Raycast(ray : Ray, raycastHit : RaycastHit, max : float) {
 	}
 	else {
 		return false;
+	}
+}
+
+public function Raycast2(ray : Ray, raycastHit : RaycastHit, max : float) {
+	var hitVolume : Volume;
+	if(Intersection(ray, root, hitVolume)) {
+		var hit : RaycastHit;
+		var tmp : GameObject = new GameObject("coll");
+		tmp.transform.position = hitVolume.transformChild.position;
+		tmp.transform.localScale = hitVolume.transformChild.localScale;
+		tmp.transform.rotation = hitVolume.transformChild.rotation;
+		var coll = tmp.AddComponent.<MeshCollider>();
+		tmp.transform.position = hitVolume.bounds.position;
+		coll.sharedMesh = null;
+		coll.sharedMesh = hitVolume.meshChild;
+		if(coll.Raycast(ray, hit, max)) { //Only performs an intersection test on this fragment of mesh.
+			raycastHit = hit;
+			return RayHit(true, hit, hitVolume.id);
+		}
+	}
+	else {
+		return RayHit(false, null, null);
 	}
 }
 

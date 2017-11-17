@@ -6,6 +6,9 @@ TagManager:
   tags:
   - RenderObject
   - RenderCamera
+  - MapWidget
+  - ScalarWidget
+  - MaterialEditor
   layers:
   - Default
   - TransparentFX

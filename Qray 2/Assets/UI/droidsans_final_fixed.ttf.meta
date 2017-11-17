@@ -14,7 +14,7 @@ TrueTypeFontImporter:
   - DejaVu Sans
   fallbackFontReferences: []
   customCharacters: 
-  fontRenderingMode: 2
+  fontRenderingMode: 0
   ascentCalculationMode: 1
   userData: 
   assetBundleName: 

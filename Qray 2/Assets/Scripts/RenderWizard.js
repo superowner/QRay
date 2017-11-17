@@ -17,6 +17,7 @@ var path : String;
 var saveName : String;
 var envMap : Texture2D;
 var envFac : float = 1;
+var emissiveObjects : GameObject[];
 
 var fStop : float = 0.4;
 var cursor : Transform;
@@ -64,6 +65,16 @@ public static function SyncPreviewShaders() {  //Syncs Unity's realtime raster s
 	}
 }
 
+public function SyncShaders() {
+	var renderObjects = GameObject.FindGameObjectsWithTag("RenderObject");
+	for(var i = 0; i < renderObjects.length; i++) {
+		var mat = renderObjects[i].GetComponent.<RenderObject>().GetMaterial();
+		var renderer = renderObjects[i].GetComponent.<Renderer>();
+		renderer.material.mainTexture = mat.maps[0];
+		//if(mat.maps[1] != null) { renderer.material.SetTexture("_BumpMap", mat.maps[1]); }
+	}
+}
+
 function GenerateBVH() {
 	BVH.GenerateBVH();
 }
@@ -92,6 +103,7 @@ public function CameraRayDOF(x : int, y : int, w : int, h : int, focus : Vector3
 }
 
 public function DOFShift(cam : Transform, focus : Vector3, fStop : float) {  //Adds some random rotation to the camera for depth of field.
+	//focus = cam.forward + Vector3(Mathf.Cos(Vector3.Dot(cam.forward, focus)) - Mathf.Sin(Vector3.Dot(cam.forward, focus)), Mathf.Sin(Vector3.Dot(cam.forward, focus)), Mathf.Cos(Vector3.Dot(cam.forward, focus)));
 	focus = Vector3(cam.position.x, cam.position.y, cam.position.z + Vector3.Dot(cam.forward, focus));  //Because we want the focus as a length that is directly in front of the cam origin, not offset.
 	var c = Random.insideUnitCircle;
 	cam.transform.RotateAround(focus, Vector3(c.x, c.y, 0), fStop);
@@ -145,4 +157,33 @@ function SelectDirectory() {
 
 function SetSaveName() {
 	saveName = nameField.text;
+}
+
+function LoadEmissiveObjects() {
+	var objects = GameObject.FindGameObjectsWithTag("RenderObject");
+	var eObjects : List.<GameObject> = new List.<GameObject>();
+	for(var obj in objects) {
+		var ro = obj.GetComponent.<RenderObject>();
+		if(ro.emittanceFac > 0) {
+			eObjects.Add(obj);
+		}
+	}
+	return eObjects.ToArray();
+}
+
+function GetPointOnMesh(obj : GameObject) : RaycastHit{
+    var hit : RaycastHit;
+    var mesh = obj.GetComponent.<MeshFilter>().mesh;
+    var triangleIndex = Random.Range(0,mesh.triangles.Length/3);
+    var BC : Vector3;
+    BC.x = Random.Range(0.0,1.0);
+    BC.y = Random.Range(0.0,1.0-BC.x);
+    BC.z = Random.Range(0.0,1.0-BC.x-BC.y);
+    hit.barycentricCoordinate = BC;
+ 	var P1 : Vector3 = mesh.vertices[mesh.triangles[hit.triangleIndex + 0]];
+ 	var P2 : Vector3 = mesh.vertices[mesh.triangles[hit.triangleIndex + 1]];
+ 	var P3 : Vector3 = mesh.vertices[mesh.triangles[hit.triangleIndex + 2]];
+ 	hit.point = obj.transform.TransformPoint(P1*BC.x + P2*BC.y + P3*BC.z);
+ 	hit.normal = Vector3.Cross((P1-P2),(P3-P2)).normalized;
+ 	return hit;
 }

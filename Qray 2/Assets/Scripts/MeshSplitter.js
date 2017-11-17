@@ -70,6 +70,7 @@ public function SplitMeshToLeafVolumes(obj : GameObject, maxTris : int) {  //Ret
 		m.RecalculateBounds();
 		parent[i / 3].meshChild = m;
 		parent[i / 3].bounds = m.bounds;
+		parent[i / 3].transformChild = obj.transform;
 		parent[i / 3].id = id;
 	}
 	var m2 = new Mesh();  //Create last triangle cluster volume.
@@ -79,6 +80,7 @@ public function SplitMeshToLeafVolumes(obj : GameObject, maxTris : int) {  //Ret
 	m2.RecalculateBounds();
 	parent[parent.length - 1].meshChild = m2;
 	parent[parent.length - 1].bounds = m2.bounds;
+	parent[parent.length - 1].transformChild = obj.transform;
 	parent[parent.length - 1].id = id;
 	return parent;  //Array of volumes, not empty object.
 }

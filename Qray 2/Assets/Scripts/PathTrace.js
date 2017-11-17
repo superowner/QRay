@@ -26,10 +26,14 @@ var ior : float[];
 var emittance : Texture2D[];
 var emittanceFac : float[];
 //--------------------------------
+//-----DYNAMIC OBJECT DATA------
+var maps : List.<Texture2D[]>;
+var scalars : List.<float[]>;
+//
 
-var lightData : List.<LightData> = new List.<LightData>();  //For experimental bidirectional rendering algorithms.
+var lights : GameObject[];
 
-function Start() { LoadRenderObjects(); Debug.Log(GetPixelFromUV(diffuse[0], Vector2(0.5,0.5))); }
+function Start() { LoadMaterials(); }
 
 //LOADS ALL THE OBJECT'S DATA INTO ARRAYS ABOVE
 function LoadRenderObjects() {
@@ -55,13 +59,32 @@ function LoadRenderObjects() {
 		emittance[i] = ro.emittance;
 		emittanceFac[i] = ro.emittanceFac;
 	}
-	ImportWizard.InternalColliders(GameObject.FindGameObjectsWithTag("RenderObject"));
+	//ImportWizard.InternalColliders(GameObject.FindGameObjectsWithTag("RenderObject"));
 	RenderWizard.SyncPreviewShaders();
+	//BVH.GenerateBVH();
+	Debug.Log("Scene reloaded.");
+}
+
+function LoadMaterials() {
+	renderObjects = GameObject.FindGameObjectsWithTag("RenderObject");
+	maps = new List.<Texture2D[]>();
+	scalars = new List.<float[]>();
+	for(var i = 0; i < renderObjects.length; i++) {
+		ro = renderObjects[i].GetComponent.<RenderObject>();
+		ro.id = i;
+		mat = ro.GetMaterial();
+		maps.Insert(i, mat.maps);
+		scalars.Insert(i, mat.scalars);
+	}
+	//ImportWizard.InternalColliders(GameObject.FindGameObjectsWithTag("RenderObject"));
+	RenderWizard.SyncShaders();
+	Debug.Log("Materials: " + maps.Count + "  ROs: " + renderObjects.length);
+	//BVH.GenerateBVH();
 	Debug.Log("Scene reloaded.");
 }
 
 function CreateRenderTexture(width : int, height : int) {
-	renderTexture = new Texture2D(width, height, TextureFormat.RGB24, false);
+	renderTexture = new Texture2D(width, height, TextureFormat.RGB24, false, false);
 	renderPreview.texture = renderTexture;
 }
 
@@ -77,12 +100,14 @@ function RenderPixel(x : int, y : int, s : int) {
 	for(var i = 0; i < s; i++) {
 		ray = RenderWizard.CameraRayDOF(x, y, renderTexture.width, renderTexture.height, RenderWizard.cursor.position, RenderWizard.fStop);
 		//ray = RenderWizard.CameraRay(x, y, renderTexture.width, renderTexture.height);
-		//Debug.DrawRay(ray.origin, ray.direction, Color.red, 10000);
 		var r = Radiance(ray, RenderWizard.maxBounces);
-		pixelColor += r.accumulateColor;
-		w += r.weight;
+		//var r = BDPTRadiance(ray, RenderWizard.maxBounces);
+		pixelColor += r.accumulateColor.Clamp(Color.white);
+		w += 1; //r.weight;
 	}
 	pixelColor /= w;
+	//var g = 1.0 / 2.2;
+	//pixelColor = Color(Mathf.Pow(pixelColor.r, g), Mathf.Pow(pixelColor.g, g), Mathf.Pow(pixelColor.b, g));
 	renderTexture.SetPixel(x, y, pixelColor);
 }
 
@@ -96,22 +121,35 @@ function Radiance(ray, bounces) {
 	for(var b = 0; b < bounces; b++) {
 		if(Physics.Raycast(ray, hit, 100)) {
 			id = hit.transform.GetComponent.<RenderObject>().id;
-			sr = Shaders.BSDF(GetPixelFromUV(diffuse[id], hit.textureCoord), GetPixelFromUV(roughness[id], hit.textureCoord).r, ray.direction, hit.normal, GetPixelFromUV(reflectance[id], hit.textureCoord).r, GetPixelFromUV(transmission[id], hit.textureCoord).r, normal[id].GetPixelBilinear(hit.textureCoord.x, hit.textureCoord.y));  //Calculates a new ray direction based on inputs (shader part).
-			ray.direction = sr.dir;  //Calculates a new ray direction based on inputs (shader part).
-			ray.origin = hit.point;  //Sets the new ray origin to hit location.
-			accumulateColor += mask * GetPixelFromUV(emittance[id], hit.textureCoord) * emittanceFac[id]; //Adds accumulate color to mask * emittance * emittanceFac.
-			mask *= sr.color;  //Multiplies mask by surface color.
-			mask *= Vector3.Dot(ray.direction, hit.normal);
-			//mask *= fudgeFactor;
+			//sr = Shaders.BSDF(GetPixelFromUV(diffuse[id], hit.textureCoord), GetPixelFromUV(roughness[id], hit.textureCoord).r, ray.direction, hit, GetPixelFromUV(reflectance[id], hit.textureCoord).r, GetPixelFromUV(transmission[id], hit.textureCoord).r, normal[id].GetPixelBilinear(hit.textureCoord.x, hit.textureCoord.y), ior[id]);  //Calculates a new ray direction based on inputs (shader part).
+			//								albedo											roughness															reflectance											transmission						normal																ior
+			sr = Shaders.BSDF(GetPixelFromUV(maps[id][0], hit.textureCoord), GetPixelFromUV(maps[id][4], hit.textureCoord).r, ray.direction, hit, GetPixelFromUV(maps[id][2], hit.textureCoord).r, GetPixelFromUV(maps[id][3], hit.textureCoord).r, maps[id][1].GetPixelBilinear(hit.textureCoord.x, hit.textureCoord.y), GetPixelFromUV(maps[id][5], hit.textureCoord).r, scalars[id][1]);  //Calculates a new ray direction based on inputs (shader part).
+			ray.direction = sr.direction;  //Calculates a new ray direction based on inputs (shader part).
+			ray.origin = sr.origin;  //Sets the new ray origin the shader's chosen location.
+			accumulateColor += mask * GetPixelFromUV(maps[id][6], hit.textureCoord) * scalars[id][0]; //Adds accumulate color to mask * emittance * emittanceFac.
+			mask *= sr.color;  //Multiplies mask by shader color.
 			weight += sr.weight;
 		}
 		else {
-			return LightPath(accumulateColor + mask * GetPixelFromUV(RenderWizard.envMap, Shaders.EnvMapUV(ray.direction)) * RenderWizard.envFac, 1);  //Factors in the environment map emittance.
+			return LightPath(accumulateColor + mask * GetPixelFromUV(RenderWizard.envMap, Shaders.EnvMapUV(ray.direction)) * RenderWizard.envFac, hit.point, 1);  //Factors in the environment map emittance.
 		}
 	}
-	return LightPath(accumulateColor, 1);
+	return LightPath(accumulateColor, hit.point, 1);
 }
 
+function BDPTRadiance(ray, bounces) {
+	var camRad = Radiance(ray, bounces);
+	var lightPoint = RenderWizard.GetPointOnMesh(lights[Random.Range(0, lights.length)]);  //Gets a random point on a random emissive mesh.
+	var lightRad = Radiance(Ray(lightPoint.point, Shaders.SampleHemisphereCap(lightPoint.normal, 180)), bounces);
+	var color : Color;
+	if(!Physics.Linecast(camRad.lastPoint, lightRad.lastPoint)) {
+		color = camRad.accumulateColor + lightRad.accumulateColor;
+		return LightPath(color, lightPoint.point, 1);  //We say the last point is the light point.
+	}
+	else {
+		return camRad;
+	}
+}
 
 function GetPixelFromUV(texture : Texture2D, uv : Vector2) {  //Returns a color from a UV coord on a texture.
 	uv.x *= texture.height;
@@ -162,7 +200,6 @@ function RenderRandom(width : int, height : int, samples : int) {
 	pcMap = null;
 	var tSize = RenderWizard.tSize;
 	var m = (width * height) / tSize * tSize;
-	Debug.Log(cMap.Count);
 	for(var iii = 0; iii < m; iii++) {
 		for(var y = 0; y < tSize; y++) {
 			var r : int = Random.Range(0, cMap.Count);
@@ -181,9 +218,11 @@ function DebugRenderTiles() {
 
 function RenderTilesBiSample() {
 	cam.UpdateCamera();
+	lights = RenderWizard.LoadEmissiveObjects();
 	CreateRenderTexture(RenderWizard.width, RenderWizard.height);
 	//StartCoroutine(RenderAllTiles(RenderWizard.tSize, RenderWizard.tSize));
 	StartCoroutine(RenderRandom(RenderWizard.width, RenderWizard.height, RenderWizard.samples));
+	//Debug.Log(RenderPixel(0,0,RenderWizard.samples));
 	renderTexture.Apply();  //Makes it readable.
 }
 

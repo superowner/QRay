@@ -91,8 +91,8 @@ MonoBehaviour:
     y: 0
     width: 385
     height: 581
-  m_MinSize: {x: 202, y: 221}
-  m_MaxSize: {x: 4002, y: 4021}
+  m_MinSize: {x: 200, y: 200}
+  m_MaxSize: {x: 4000, y: 4000}
   m_ActualView: {fileID: 17}
   m_Panes:
   - {fileID: 17}
@@ -145,7 +145,7 @@ MonoBehaviour:
     y: 0
     width: 1829
     height: 946
-  m_MinSize: {x: 950, y: 542}
+  m_MinSize: {x: 950, y: 300}
   m_MaxSize: {x: 10000, y: 10000}
 --- !u!114 &7
 MonoBehaviour:
@@ -390,19 +390,19 @@ MonoBehaviour:
     m_ShowAllHits: 0
     m_SearchArea: 0
     m_Folders:
-    - Assets/Scripts
+    - Assets/Objects/TestObjects
   m_ViewMode: 1
   m_StartGridSize: 64
   m_LastFolders:
-  - Assets/Scripts
+  - Assets/Objects/TestObjects
   m_LastFoldersGridSize: -1
   m_LastProjectPath: C:\Users\user\Documents\Apps\QRay\Qray 2
   m_IsLocked: 0
   m_FolderTreeState:
-    scrollPos: {x: 0, y: 215}
-    m_SelectedIDs: a2250000
-    m_LastClickedID: 9634
-    m_ExpandedIDs: 000000003e25000078250000a22500002a2600003c26000070260000cc260000ec260000982d00009a2d000000ca9a3bffffff7f
+    scrollPos: {x: 0, y: 95}
+    m_SelectedIDs: 34260000
+    m_LastClickedID: 9780
+    m_ExpandedIDs: 00000000382500007825000086250000a42500006226000098260000d0260000ac270000ce270000a22e0000a42e000000ca9a3bffffff7f
     m_RenameOverlay:
       m_UserAcceptedRename: 0
       m_Name: 
@@ -430,7 +430,7 @@ MonoBehaviour:
     scrollPos: {x: 0, y: 0}
     m_SelectedIDs: 
     m_LastClickedID: 0
-    m_ExpandedIDs: 000000003e25000078250000a22500002a2600003c26000070260000cc260000ec260000982d00009a2d0000
+    m_ExpandedIDs: 00000000382500007825000086250000a42500006226000098260000d0260000ac270000ce270000a22e0000a42e0000
     m_RenameOverlay:
       m_UserAcceptedRename: 0
       m_Name: 
@@ -457,8 +457,8 @@ MonoBehaviour:
   m_ListAreaState:
     m_SelectedInstanceIDs: 
     m_LastClickedInstanceID: 0
-    m_HadKeyboardFocusLastEvent: 0
-    m_ExpandedInstanceIDs: 
+    m_HadKeyboardFocusLastEvent: 1
+    m_ExpandedInstanceIDs: 6a1bfcff
     m_RenameOverlay:
       m_UserAcceptedRename: 0
       m_Name: 
@@ -511,7 +511,7 @@ MonoBehaviour:
     y: 92
     width: 527
     height: 875
-  m_ScrollPosition: {x: 0, y: 0}
+  m_ScrollPosition: {x: 0, y: 240}
   m_InspectorMode: 0
   m_PreviewResizer:
     m_CachedPref: 334
@@ -546,9 +546,9 @@ MonoBehaviour:
     height: 560
   m_TreeViewState:
     scrollPos: {x: 0, y: 0}
-    m_SelectedIDs: 
-    m_LastClickedID: 0
-    m_ExpandedIDs: e6fbffff00000000cc270000
+    m_SelectedIDs: b8b8ffff
+    m_LastClickedID: -18248
+    m_ExpandedIDs: bab8ffffe8fbffff00000000a8280000
     m_RenameOverlay:
       m_UserAcceptedRename: 0
       m_Name: 
@@ -598,14 +598,14 @@ MonoBehaviour:
     width: 911
     height: 560
   m_SceneLighting: 1
-  lastFramingTime: 7415.57359701573
+  lastFramingTime: 27487.667356622092
   m_2DMode: 0
   m_isRotationLocked: 0
   m_AudioPlay: 0
   m_Position:
-    m_Target: {x: 1.6945857, y: 4.2721896, z: -9.51384}
+    m_Target: {x: 3.044139, y: 4.8044057, z: -0.3964685}
     speed: 2
-    m_Value: {x: 1.6945857, y: 4.2721896, z: -9.51384}
+    m_Value: {x: 3.044139, y: 4.8044057, z: -0.3964685}
   m_RenderMode: 0
   m_ValidateTrueMetals: 0
   m_SceneViewState:
@@ -628,18 +628,18 @@ MonoBehaviour:
       speed: 2
       m_Value: 0
   m_Rotation:
-    m_Target: {x: 0.048083033, y: -0.46348554, z: 0.025197305, w: 0.8844401}
+    m_Target: {x: 0.052782472, y: -0.011080571, z: 0.0005858369, w: 0.99854434}
     speed: 2
-    m_Value: {x: 0.048083033, y: -0.46348554, z: 0.025197305, w: 0.8844401}
+    m_Value: {x: -0.052782472, y: 0.011080572, z: -0.00058583694, w: -0.9985444}
   m_Size:
-    m_Target: 11.154725
+    m_Target: 15.041199
     speed: 2
-    m_Value: 11.154725
+    m_Value: 15.041199
   m_Ortho:
     m_Target: 0
     speed: 2
     m_Value: 0
-  m_LastSceneViewRotation: {x: -0.08717229, y: 0.89959055, z: -0.21045254, w: -0.3726226}
+  m_LastSceneViewRotation: {x: -0.051214132, y: -0.053307027, z: 0.0027376718, w: -0.9972603}
   m_LastSceneViewOrtho: 0
   m_ReplacementShader: {fileID: 0}
   m_ReplacementString: 

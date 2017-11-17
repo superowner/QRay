@@ -5,7 +5,7 @@ var normal : Vector3 = Vector3(0,1,0);  //up
 
 function Start() {
 	for(var i = 0; i < 200; i++) {
-		Instantiate(point, Shaders.SampleHemisphereCap(normal, 180), Quaternion(0,0,0,0));
+		Instantiate(point, Shaders.Diffuse(normal, RaycastHit(), Color.white).direction, Quaternion(0,0,0,0));
 	}
 }
 

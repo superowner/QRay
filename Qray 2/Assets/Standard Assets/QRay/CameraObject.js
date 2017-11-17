@@ -13,6 +13,6 @@ function UpdateCamera() {  //Need to call whenever the camera is moved. (Automat
 	}
 }
 
-function UpdateCameraSize() {
+function UpdateCameraSize(x, y) {
 	
 }

@@ -85,4 +85,8 @@ public static class ExtensionMethods
 	    return MC.transform.TransformDirection(localNormal);
 	 }
 
+	 public static Color Clamp(this Color color, Color max) {
+		return new Color(Mathf.Clamp(color.r, 0, max.r), Mathf.Clamp(color.g, 0, max.g), Mathf.Clamp(color.b, 0, max.b));
+	 }
+
 }
